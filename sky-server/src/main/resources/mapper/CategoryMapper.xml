@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.CategoryMapper">
+    <insert id="insert" parameterType="com.sky.entity.CategoryPO">
+        insert into category
+            (
+             <if test="id != null">
+                id,
+            </if>
+             type,name,sort,status,create_time,update_time,create_user,update_user)
+        values(
+            <if test="id != null">
+                #{id},
+            </if>
+               #{type},#{name},#{sort},#{status},#{createTime},#{updateTime},#{createUser},#{updateUser}
+              )
+    </insert>
+
+    <!--开启了驼峰命名后，返回的数据将根据名字进行驼峰转换  create_time->createTime-->
+    <select id="updateById">
+    update category
+    <set>
+        <if test="name != null and name != ''">
+            name = #{name},
+        </if>
+        <if test="sort != null and sort != ''">
+            sort = #{sort},
+        </if>
+        <if test="type != null and type != ''">
+            type = #{type},
+        </if>
+    </set>
+        where id = #{id}
+    </select>
+
+
+    <select id="selectByNameAndType" resultType="com.sky.entity.CategoryPO">
+        select * from category
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+<!--                不要用${}，这个会将用户输入原样的插入到sql语句中，但是#{}能够将里面的特殊字符进行转义，从而杜绝sql注入的风险-->
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+        </where>
+    </select>
+
+</mapper>
