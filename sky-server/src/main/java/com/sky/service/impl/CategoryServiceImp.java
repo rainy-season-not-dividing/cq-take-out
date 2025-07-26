@@ -10,6 +10,7 @@ import com.sky.result.Result;
 import com.sky.service.CategoryService;
 import com.sky.vo.CategoryVO;
 import com.sky.context.BaseContext;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +27,9 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public void update(CategoryDTO categoryDTO) {
         //调用方法修改分类的信息
-        categoryMapper.updateById(categoryDTO);
+        CategoryPO categoryPO = new CategoryPO();
+        BeanUtils.copyProperties(categoryDTO,categoryPO);
+        categoryMapper.updateById(categoryPO);
     }
 
     @Override
@@ -63,11 +66,12 @@ public class CategoryServiceImp implements CategoryService {
                 .name(categoryDTO.getName())
                 .sort(categoryDTO.getSort())
                 .type(categoryDTO.getType())
-                .status(Long.valueOf(StatusConstant.DISABLE))     //默认为禁用
-                .createTime(String.valueOf(LocalDateTime.now()))
-                .updateTime(String.valueOf(LocalDateTime.now()))
-                .createUser(BaseContext.getCurrentId())
-                .updateUser(BaseContext.getCurrentId()).build();
+                .status(Long.valueOf(StatusConstant.DISABLE))  //默认为禁用
+//                .createTime(String.valueOf(LocalDateTime.now()))
+//                .updateTime(String.valueOf(LocalDateTime.now()))
+//                .createUser(BaseContext.getCurrentId())
+//                .updateUser(BaseContext.getCurrentId())
+                .build();
         //插入表中
         categoryMapper.insert(categoryPo);
     }

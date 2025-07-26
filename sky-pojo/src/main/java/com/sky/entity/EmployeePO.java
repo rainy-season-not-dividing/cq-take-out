@@ -2,6 +2,8 @@ package com.sky.entity;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class EmployeePO {
     private Integer id;
@@ -12,8 +14,8 @@ public class EmployeePO {
     private String sex;
     private String idNumber;
     private Long status;
-    private String createTime;
-    private String updateTime;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
     private Long createUser;
     private Long updateUser;
 }

@@ -82,11 +82,10 @@ public class EmployeeServiceImp implements EmployeeService {
         //密码加密
         employeePO.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
         employeePO.setStatus(Long.valueOf(StatusConstant.DISABLE)); //采用状态常量，避免硬编码，便于维护
-        //todo:改为autofill自动注入
-        employeePO.setCreateTime(String.valueOf(LocalDateTime.now()));
-        employeePO.setUpdateTime(String.valueOf(LocalDateTime.now()));
-        employeePO.setCreateUser(BaseContext.getCurrentId());
-        employeePO.setUpdateUser(BaseContext.getCurrentId());
+//        employeePO.setCreateTime(String.valueOf(LocalDateTime.now()));
+//        employeePO.setUpdateTime(String.valueOf(LocalDateTime.now()));
+//        employeePO.setCreateUser(BaseContext.getCurrentId());
+//        employeePO.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.insert(employeePO);
     }
 
@@ -104,8 +103,8 @@ public class EmployeeServiceImp implements EmployeeService {
         employeePO.setPhone(employeeAddDTO.getPhone());
         employeePO.setSex(employeeAddDTO.getSex());
         employeePO.setUsername(employeeAddDTO.getUsername());
-        employeePO.setUpdateTime(String.valueOf(LocalDateTime.now()));
-        employeePO.setUpdateUser(BaseContext.getCurrentId());
+//        employeePO.setUpdateTime(String.valueOf(LocalDateTime.now()));
+//        employeePO.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.updateById(employeePO);
     }
 

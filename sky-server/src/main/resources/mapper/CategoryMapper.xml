@@ -18,7 +18,7 @@
     </insert>
 
     <!--开启了驼峰命名后，返回的数据将根据名字进行驼峰转换  create_time->createTime-->
-    <select id="updateById">
+    <select id="updateById" parameterType="com.sky.entity.CategoryPO">
     update category
     <set>
         <if test="name != null and name != ''">
@@ -29,6 +29,12 @@
         </if>
         <if test="type != null and type != ''">
             type = #{type},
+        </if>
+        <if test="updateTime!=null">
+            update_time = #{updateTime},
+        </if>
+        <if test="updateUser!=null">
+            update_user = #{updateUser},
         </if>
     </set>
         where id = #{id}

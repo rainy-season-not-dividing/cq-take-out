@@ -1,9 +1,11 @@
 package com.sky.mapper;
 
 import com.github.pagehelper.Page;
+import com.sky.annotation.AutoFill;
 import com.sky.dto.EmployeePasswordModifyDTO;
 import com.sky.dto.EmployeePageDTO;
 import com.sky.entity.EmployeePO;
+import com.sky.enumeration.OperationType;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -11,7 +13,8 @@ import org.apache.ibatis.annotations.Update;
 @Mapper
 public interface EmployeeMapper {
     // 根据id和密码修改密码
-    @Update("update employee set password=#{newPassword} where id=#{empId}")
+    @AutoFill(OperationType.UPDATE)
+    @Update("update employee set password=#{newPassword},update_time=#{updateTime},update_user= #{updateUser} where id=#{empId}")
     void updatePassword(EmployeePasswordModifyDTO employeePasswordModifyDTO);
 
     // 分页查询
@@ -22,6 +25,7 @@ public interface EmployeeMapper {
     EmployeePO getByName(String username);
 
     // 添加员工
+    @AutoFill(OperationType.INSERT)
     void insert(EmployeePO employeePO);
 
     // 根据id查询员工
@@ -29,7 +33,8 @@ public interface EmployeeMapper {
     EmployeePO getById(Long id);
 
     // 修改员工  ：修改时要思考，是否有可能传过来的对象中，存在某些字段为null或者‘’，那么这些字段应该如何处理？
-    @Update("update employee set id_number=#{idNumber}, name=#{name}, phone=#{phone}, sex=#{sex}, username=#{username} where id=#{id}")
+    @AutoFill(OperationType.UPDATE)
+    @Update("update employee set id_number=#{idNumber}, name=#{name}, phone=#{phone}, sex=#{sex}, username=#{username},update_user=#{updateUser}, update_time=#{updateTime} where id=#{id}")
     void updateById(EmployeePO employeePO);
 
     // 修改员工状态
