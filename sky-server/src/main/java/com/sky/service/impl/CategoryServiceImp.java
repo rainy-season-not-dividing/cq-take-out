@@ -88,7 +88,6 @@ public class CategoryServiceImp implements CategoryService {
 
     @Override
     public void delete(Long id) {
-        // todo:补充异常处理，不存在并不会出错，但是可能该分类与菜品或者套餐有关联，所以不能删除
         Long count = dishMapper.countByCategoryId(id);
         if(count>0){
             throw new DeletionNotAllowedException(CategoryConstant.CATEGORY_IS_RELATED_TO_DISH);
