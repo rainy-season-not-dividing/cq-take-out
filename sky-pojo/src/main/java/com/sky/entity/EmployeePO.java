@@ -13,7 +13,7 @@ public class EmployeePO {
     private String phone;
     private String sex;
     private String idNumber;
-    private Long status;
+    private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Long createUser;

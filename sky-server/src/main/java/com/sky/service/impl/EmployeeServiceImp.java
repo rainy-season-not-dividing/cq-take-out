@@ -81,7 +81,7 @@ public class EmployeeServiceImp implements EmployeeService {
         // 这里不用考虑id的问题，一般不会指定，而是通过数据库的自增进行操作
         //密码加密
         employeePO.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
-        employeePO.setStatus(Long.valueOf(StatusConstant.DISABLE)); //采用状态常量，避免硬编码，便于维护
+        employeePO.setStatus(StatusConstant.DISABLE); //采用状态常量，避免硬编码，便于维护
 //        employeePO.setCreateTime(String.valueOf(LocalDateTime.now()));
 //        employeePO.setUpdateTime(String.valueOf(LocalDateTime.now()));
 //        employeePO.setCreateUser(BaseContext.getCurrentId());

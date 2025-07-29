@@ -2,10 +2,14 @@ package com.sky.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.sky.constant.CategoryConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.CategoryDTO;
 import com.sky.entity.CategoryPO;
+import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.CategoryMapper;
+import com.sky.mapper.DishMapper;
+import com.sky.mapper.SetmealMapper;
 import com.sky.result.Result;
 import com.sky.service.CategoryService;
 import com.sky.vo.CategoryVO;
@@ -23,6 +27,12 @@ public class CategoryServiceImp implements CategoryService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    @Autowired
+    private DishMapper dishMapper;
+
+    @Autowired
+    private SetmealMapper setmealMapper;
 
     @Override
     public void update(CategoryDTO categoryDTO) {
@@ -48,7 +58,7 @@ public class CategoryServiceImp implements CategoryService {
         //使用pageHelper简化
         //使用pageHelper
         PageHelper.startPage(page,pageSize);
-        Page<CategoryPO> records = (Page<CategoryPO>) categoryMapper.selectByNameAndType(name, type);
+        Page<CategoryPO> records = categoryMapper.selectByNameAndType(name, type);
         return new CategoryVO(records.getTotal(), records.getResult());
 
     }
@@ -66,7 +76,7 @@ public class CategoryServiceImp implements CategoryService {
                 .name(categoryDTO.getName())
                 .sort(categoryDTO.getSort())
                 .type(categoryDTO.getType())
-                .status(Long.valueOf(StatusConstant.DISABLE))  //默认为禁用
+                .status(StatusConstant.DISABLE)  //默认为禁用
 //                .createTime(String.valueOf(LocalDateTime.now()))
 //                .updateTime(String.valueOf(LocalDateTime.now()))
 //                .createUser(BaseContext.getCurrentId())
@@ -79,6 +89,14 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public void delete(Long id) {
         // todo:补充异常处理，不存在并不会出错，但是可能该分类与菜品或者套餐有关联，所以不能删除
+        Long count = dishMapper.countByCategoryId(id);
+        if(count>0){
+            throw new DeletionNotAllowedException(CategoryConstant.CATEGORY_IS_RELATED_TO_DISH);
+        }
+        count = setmealMapper.countByCategoryId(id);
+        if(count>0){
+            throw new DeletionNotAllowedException(CategoryConstant.CATEGORY_IS_RELATED_TO_SETMEAL);
+        }
         //根据id删除分类
         categoryMapper.deleteById(id);
     }

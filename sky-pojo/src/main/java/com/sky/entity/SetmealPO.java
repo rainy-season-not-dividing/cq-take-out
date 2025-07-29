@@ -1,22 +1,19 @@
 package com.sky.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Builder
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class CategoryPO {
+public class SetmealPO {
     private Long id;
-    private Long type;
+    private Long categoryId;
     private String name;
-    private Long sort;
+    private BigDecimal price;
     private Integer status;
+    private String description;
+    private String image;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Long createUser;
