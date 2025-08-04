@@ -17,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ public class DishServiceImp implements DishService {
     private SetmealDishMapper setmealDishMapper;
 
     @Override
+    @CachePut(cacheNames = "category", key = "#dishUpdateDTO.categoryId")
     public void update(DishUpdateDTO dishUpdateDTO) {
         // 封装DishPO类
         DishPO dishPO = new DishPO();
@@ -90,6 +94,7 @@ public class DishServiceImp implements DishService {
     }
 
     @Override
+    @CacheEvict(cacheNames="category",key = "#dishAddDTO.categoryId")
     public void add(DishAddDTO dishAddDTO) {
         // 添加菜品
         DishPO dishPO = new DishPO();
@@ -108,12 +113,14 @@ public class DishServiceImp implements DishService {
     }
 
     @Override
+    @Cacheable(cacheNames="category", key = "#categoryId")
     public List<DishPO> selectByCategoryId(Long categoryId) {
         return dishMapper.selectByCategoryId(categoryId);
     }
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames="category",allEntries = true)
     public void deleteByIds(String ids) {
         // ids转换列表
         List<Long> idList = Arrays.stream(ids.split(","))

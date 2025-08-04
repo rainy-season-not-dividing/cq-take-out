@@ -53,7 +53,7 @@ public class AutoFillAspect {
             throw new RuntimeException("当前用户id为空，请重新登录");
         }
         //2、拿出线程中的操作用户的id，  这是在拦截器中，通过请求token的JWT令牌解析得到的id，并存储在线程变量中
-        long currentId = BaseContext.getCurrentId();
+        Long currentId = BaseContext.getCurrentId();
         log.info("当前用户id:{}", currentId);
 
 
