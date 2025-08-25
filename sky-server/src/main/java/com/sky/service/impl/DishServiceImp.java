@@ -46,6 +46,7 @@ public class DishServiceImp implements DishService {
     @Override
     @CachePut(cacheNames = "category", key = "#dishUpdateDTO.categoryId")
     public void update(DishUpdateDTO dishUpdateDTO) {
+
         // 封装DishPO类
         DishPO dishPO = new DishPO();
         BeanUtils.copyProperties(dishUpdateDTO,dishPO);

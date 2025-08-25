@@ -22,6 +22,7 @@ import java.util.Set;
 @RestController
 @Slf4j
 public class DishController {
+    // todo:改成Redis + MyBatis-Plus
 
     @Autowired
     private DishService dishService;
