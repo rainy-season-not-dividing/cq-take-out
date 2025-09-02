@@ -16,7 +16,7 @@ import static com.sky.result.Result.success;
 @RestController
 @Slf4j
 public class CategoryController {
-    // 优化，提高查询效率
+    // 优化，缓存提高查询效率
 
     @Autowired
     private CategoryService categoryService;
