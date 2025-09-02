@@ -63,17 +63,21 @@
                 <version>${druid}</version>
             </dependency>
 
-            <dependency>
-                <groupId>com.github.pagehelper</groupId>
-                <artifactId>pagehelper-spring-boot-starter</artifactId>
-                <version>${pagehelper}</version>
-            </dependency>
+<!--            项目引入了 pagehelper-spring-boot-starter（分页插件），而 PageHelper 会间接依赖原生 MyBatis 包：-->
+<!--            会导致版本冲突的问题-->
+<!--            <dependency>-->
+<!--                <groupId>com.github.pagehelper</groupId>-->
+<!--                <artifactId>pagehelper-spring-boot-starter</artifactId>-->
+<!--                <version>${pagehelper}</version>-->
+<!--            </dependency>-->
 
             <dependency>
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-spring-boot-starter</artifactId>
                 <version>${knife4j}</version>
             </dependency>
+
+
 
             <dependency>
                 <groupId>org.aspectj</groupId>

@@ -56,6 +56,7 @@ public class EmployeeController {
                 jwtProperties.getAdminTtl(),
                 claims);
         employeeLoginVO.setToken(token);
+        log.info("当前用户id是{}，生成的token为：{}",employeeLoginVO.getId(),token);
 
         return Result.success(employeeLoginVO);
     }

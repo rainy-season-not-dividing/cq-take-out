@@ -85,16 +85,16 @@ public class DishController {
         return Result.success();
     }
 
-    private void clearCache(String pattern){
-        log.info("清理缓存：{}",pattern);
-        Set keys = redisTemplate.keys(pattern);
-        redisTemplate.delete(keys);
-        log.info("清理完成");
-    }
-
-    @Scheduled(cron = "0 * * * * ? ")
-    private void clearCache(){
-        log.info("定时任务调度");
-        clearCache("category::*");
-    }
+//    private void clearCache(String pattern){
+//        log.info("清理缓存：{}",pattern);
+//        Set keys = redisTemplate.keys(pattern);
+//        redisTemplate.delete(keys);
+//        log.info("清理完成");
+//    }
+//
+//    @Scheduled(cron = "0 * * * * ? ")
+//    private void clearCache(){
+//        log.info("定时任务调度");
+//        clearCache("category::*");
+//    }
 }

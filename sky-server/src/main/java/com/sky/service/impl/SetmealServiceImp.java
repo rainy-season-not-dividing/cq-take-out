@@ -1,7 +1,6 @@
 package com.sky.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sky.dto.SetmealDTO;
 import com.sky.entity.SetmealDishPO;
 import com.sky.entity.SetmealPO;
@@ -36,7 +35,7 @@ public class SetmealServiceImp implements SetmealService {
 
     @Override
     public PageResult<SetmealVO> page(Long categoryId, String name, Integer page, Integer pageSize, Integer status) {
-        PageHelper.startPage(page,pageSize);
+//        PageHelper.startPage(page,pageSize);
         Page<SetmealVO> records =  setmealMapper.page(categoryId, name, status);
         // 这种方式不好，包含多次调用mapper，数据库压力较大
         log.info("分页查询，结果：{}", records);
@@ -51,7 +50,7 @@ public class SetmealServiceImp implements SetmealService {
 //                    return setmealVO;
 //                }
 //        ).collect(Collectors.toList());
-        return new PageResult<>(records.getTotal(),records.getResult());
+        return new PageResult<>(records.getTotal(),records.getRecords());
     }
 
     @Override

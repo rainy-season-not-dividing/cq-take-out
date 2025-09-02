@@ -1,6 +1,6 @@
 package com.sky.mapper;
 
-import com.github.pagehelper.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sky.annotation.AutoFill;
 import com.sky.entity.SetmealDishPO;
 import com.sky.entity.SetmealPO;

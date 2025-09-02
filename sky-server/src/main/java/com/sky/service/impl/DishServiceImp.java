@@ -1,7 +1,7 @@
 package com.sky.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sky.constant.DishConstant;
 import com.sky.dto.DishAddDTO;
 import com.sky.dto.DishUpdateDTO;
@@ -69,7 +69,7 @@ public class DishServiceImp implements DishService {
     @Override
     public PageResult<DishVO> page(Integer page, Integer pageSize, String name, Integer categoryId, Integer status) {
 //        // 设置分页参数并执行查询
-        PageHelper.startPage(page,pageSize);
+//        PageHelper.startPage(page,pageSize);
         Page<DishVO> records =  dishMapper.page(name, categoryId, status);
 //        log.info("分页查询结果：{}", records);
 //        List<DishVO> dishVOs = records.getResult().stream()
@@ -81,7 +81,7 @@ public class DishServiceImp implements DishService {
 //                })
 //                .collect(Collectors.toList());
 //        return new PageResult(records.getTotal(), dishVOs);
-        return new PageResult<>(records.getTotal(), records.getResult());
+        return new PageResult<>(records.getTotal(), records.getRecords());
     }
 
     @Override

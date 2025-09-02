@@ -1,5 +1,6 @@
 package com.sky.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.sky.dto.CategoryDTO;
 import com.sky.entity.CategoryPO;
 import com.sky.result.Result;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 
-public interface CategoryService {
+public interface CategoryService extends IService<CategoryPO> {
     // 修改分类
     void update(CategoryDTO categoryDTO);
 

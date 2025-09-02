@@ -1,7 +1,9 @@
 package com.sky.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.injector.methods.Insert;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sky.constant.CategoryConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.CategoryDTO;
@@ -14,6 +16,7 @@ import com.sky.result.Result;
 import com.sky.service.CategoryService;
 import com.sky.vo.CategoryVO;
 import com.sky.context.BaseContext;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +26,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class CategoryServiceImp implements CategoryService {
+@Slf4j
+public class CategoryServiceImp extends ServiceImpl<CategoryMapper,CategoryPO> implements CategoryService {
 
     @Autowired
     private CategoryMapper categoryMapper;
@@ -37,6 +41,7 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public void update(CategoryDTO categoryDTO) {
         //调用方法修改分类的信息
+        log.info("修改分类，参数：{}",categoryDTO);
         CategoryPO categoryPO = new CategoryPO();
         BeanUtils.copyProperties(categoryDTO,categoryPO);
         categoryMapper.updateById(categoryPO);
@@ -55,12 +60,29 @@ public class CategoryServiceImp implements CategoryService {
         //返回结果
         return result;
         * */
-        //使用pageHelper简化
+        /*
+        使用pageHelper简化
         //使用pageHelper
         PageHelper.startPage(page,pageSize);
         Page<CategoryPO> records = categoryMapper.selectByNameAndType(name, type);
         return new CategoryVO(records.getTotal(), records.getResult());
+        */
 
+        /*
+          使用mybatis-plus的分页插件
+         */
+        // 1、构造wrapper
+        LambdaQueryWrapper<CategoryPO> wrapper = new LambdaQueryWrapper<CategoryPO>()
+                .like(name!=null,CategoryPO::getName,name)
+                .eq(type!=null, CategoryPO::getType,type);
+        // 2、分页查询
+        Page<CategoryPO> resultPage = new Page<>(page,pageSize);
+        categoryMapper.selectPage(resultPage,wrapper);
+        // 3、封装VO
+        CategoryVO categoryVO = new CategoryVO(resultPage.getTotal(), resultPage.getRecords());
+
+        // 4、返回结果
+        return categoryVO;
     }
 
     @Override
@@ -83,7 +105,7 @@ public class CategoryServiceImp implements CategoryService {
 //                .updateUser(BaseContext.getCurrentId())
                 .build();
         //插入表中
-        categoryMapper.insert(categoryPo);
+        save(categoryPo);
     }
 
     @Override
@@ -97,12 +119,19 @@ public class CategoryServiceImp implements CategoryService {
             throw new DeletionNotAllowedException(CategoryConstant.CATEGORY_IS_RELATED_TO_SETMEAL);
         }
         //根据id删除分类
-        categoryMapper.deleteById(id);
+//        categoryMapper.deleteById(id);
+        // 1、查询当前分类是否关联了菜品
+        // todo：完成菜品后补充
+        // 2、查询当前分类是否关联了套餐
+        // todo：完成套餐后补充
+        // 根据id删除分类
+        removeById(id);
     }
 
     @Override
     public List<CategoryPO> selectByType(Integer type) {
-        List<CategoryPO> categoryPOs = categoryMapper.selectByType(type);
+//        List<CategoryPO> categoryPOs = categoryMapper.selectByType(type);
+        List<CategoryPO> categoryPOs = list(new LambdaQueryWrapper<CategoryPO>().eq(CategoryPO::getType,type));
         return categoryPOs;
     }
 }

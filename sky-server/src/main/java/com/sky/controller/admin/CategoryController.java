@@ -1,17 +1,17 @@
 package com.sky.controller.admin;
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.sky.dto.CategoryDTO;
 import com.sky.entity.CategoryPO;
 import com.sky.result.Result;
 import com.sky.service.CategoryService;
 import com.sky.vo.CategoryVO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static com.sky.result.Result.success;
 
 @RestController
 @Slf4j
@@ -25,7 +25,9 @@ public class CategoryController {
     @PutMapping("/admin/category")
     public Result<String> update(@RequestBody CategoryDTO categoryDTO){
         log.info("修改分类，参数：{}",categoryDTO);
-        categoryService.update(categoryDTO);
+        CategoryPO categoryPO = new CategoryPO();
+        BeanUtils.copyProperties(categoryDTO,categoryPO);
+        categoryService.updateById(categoryPO);
         return Result.success();
     }
 
@@ -34,14 +36,20 @@ public class CategoryController {
     public Result<CategoryVO> page(Integer page, Integer pageSize, String name, Integer type){
         log.info("分页查询，参数：page={},pageSize={},name={},type={}",page,pageSize,name,type);
         CategoryVO result = categoryService.page(page, pageSize, name, type);
-        return Result.success( result);
+        return Result.success(result);
     }
 
     //启用、禁用分类
     @PostMapping("/admin/category/status/{status}")
     public Result<String> startOrStop(@PathVariable Integer status,@RequestParam Long id){
         log.info("启用、禁用分类，状态：{}",status);
-        categoryService.startOrStop(status,id);
+//        categoryService.startOrStop(status,id);
+        // 构造 updatewrapper
+        UpdateWrapper<CategoryPO> updateWrapper = new UpdateWrapper<CategoryPO>()
+                .eq("id",id)
+                .set("status",status);
+        // 调用updateById函数
+        categoryService.update(updateWrapper);
         return Result.success();
     }
 
@@ -68,7 +76,5 @@ public class CategoryController {
         List<CategoryPO> list = categoryService.selectByType( type);
         return Result.success( list);
     }
-
-
 
 }

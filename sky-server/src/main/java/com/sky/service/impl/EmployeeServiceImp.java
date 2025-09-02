@@ -1,7 +1,7 @@
 package com.sky.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
@@ -46,12 +46,12 @@ public class EmployeeServiceImp implements EmployeeService {
     @Override
     public PageResult<EmployeePO> page(EmployeePageDTO employeePageDTO) {
         // 通过PageHelper进行分页，得到的对象是List<EmployeePO>
-        PageHelper.startPage(employeePageDTO.getPage(),employeePageDTO.getPageSize());
+//        PageHelper.startPage(employeePageDTO.getPage(),employeePageDTO.getPageSize());
         // 一条sql进行分页，自动加入limit关键字分页，Page类会自动执行两条sql语句，一个是自动加上limit的，另一个是查总记录数的，由getTotal()函数得到
         Page<EmployeePO> page = employeeMapper.pageQuery(employeePageDTO);
         //封装成PageResult类
         //返回结果
-        return new PageResult<>(page.getTotal(), page.getResult());
+        return new PageResult<>(page.getTotal(), page.getRecords());
 
     }
 
