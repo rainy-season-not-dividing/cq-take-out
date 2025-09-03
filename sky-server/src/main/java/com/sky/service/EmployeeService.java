@@ -1,5 +1,6 @@
 package com.sky.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.sky.dto.EmployeeAddDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePasswordModifyDTO;
@@ -8,7 +9,7 @@ import com.sky.entity.EmployeePO;
 import com.sky.result.PageResult;
 import com.sky.vo.EmployeeLoginVO;
 
-public interface EmployeeService {
+public interface EmployeeService extends IService<EmployeePO> {
 
     //修改密码
     void updatePassword(EmployeePasswordModifyDTO employeePasswordModifyDTO);
@@ -23,7 +24,7 @@ public interface EmployeeService {
     void add(EmployeeAddDTO employeeAddDTO);
 
     //根据id查询员工
-    EmployeePO getById(Long id);
+//    EmployeePO getById(Long id);
 
     //修改员工信息
     void updateEmp(EmployeeAddDTO employeeAddDTO);

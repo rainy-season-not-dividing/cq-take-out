@@ -23,6 +23,6 @@ public interface CategoryMapper extends BaseMapper<CategoryPO> {
     @Select("select * from category where type = #{type}")
     List<CategoryPO> selectByType(Integer type);
 
-    @Select("select * from category where id = #{id}")
-    CategoryPO selectById(Long categoryId);
+//    @Select("select * from category where id = #{id}")
+//    CategoryPO selectById(Long categoryId);
 }

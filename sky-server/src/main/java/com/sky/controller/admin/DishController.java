@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sky.dto.DishAddDTO;
 import com.sky.dto.DishUpdateDTO;
 import com.sky.entity.DishPO;
@@ -22,7 +24,7 @@ import java.util.Set;
 @RestController
 @Slf4j
 public class DishController {
-    // todo:改成Redis + MyBatis-Plus
+
 
     @Autowired
     private DishService dishService;
@@ -48,7 +50,7 @@ public class DishController {
     @GetMapping("/admin/dish/{id}")
     public Result<DishVO> getById(@PathVariable Long id){
         log.info("根据id查询菜品:{}",id);
-        DishVO dishVO = dishService.getById(id);
+        DishVO dishVO = dishService.getDishById(id);
         return Result.success(dishVO);
     }
 
@@ -72,8 +74,9 @@ public class DishController {
     @PostMapping("/admin/dish")
     public Result<String> save(@RequestBody DishAddDTO dishAddDTO){
         log.info("新增菜品:{}",dishAddDTO);
+        // 自定义方法
         dishService.add(dishAddDTO);
-//        clearCache(String.valueOf(dishAddDTO.getCategoryId()));
+        clearCache(String.valueOf(dishAddDTO.getCategoryId()));
         return Result.success();
     }
 
@@ -81,16 +84,16 @@ public class DishController {
     public Result<String> delete(String ids){
         log.info("批量删除菜品:{}",ids);
         dishService.deleteByIds(ids);
-//        clearCache("category_*");
+        clearCache("category_*");
         return Result.success();
     }
 
-//    private void clearCache(String pattern){
-//        log.info("清理缓存：{}",pattern);
-//        Set keys = redisTemplate.keys(pattern);
-//        redisTemplate.delete(keys);
-//        log.info("清理完成");
-//    }
+    private void clearCache(String pattern){
+        log.info("清理缓存：{}",pattern);
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
+        log.info("清理完成");
+    }
 //
 //    @Scheduled(cron = "0 * * * * ? ")
 //    private void clearCache(){

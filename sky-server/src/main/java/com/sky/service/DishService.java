@@ -1,5 +1,6 @@
 package com.sky.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.sky.dto.DishAddDTO;
 import com.sky.dto.DishUpdateDTO;
 import com.sky.entity.DishPO;
@@ -9,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface DishService {
+public interface DishService extends IService<DishPO> {
 
     // 修改菜品
     @Transactional
@@ -19,7 +20,7 @@ public interface DishService {
     PageResult<DishVO> page(Integer page, Integer pageSize, String name, Integer categoryId, Integer status);
 
     // 根据id查询菜品
-    DishVO getById(Long id);
+    DishVO getDishById(Long id);
 
     // 添加菜品
     @Transactional  //这个注解的作用是：如果添加菜品时出现异常，则回滚，确保数据一致性
