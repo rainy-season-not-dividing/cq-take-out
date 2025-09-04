@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.OrderMapper" >
+    <select id="selectTop10Sales" resultType="com.sky.dto.ProductSalesDTO">
+        SELECT
+        -- 取菜品名或套餐名（二选一，用COALESCE处理null）
+        COALESCE(d.name, s.name) AS product_name,
+        -- 统计总销量
+        SUM(od.number) AS total_sales
+        FROM
+        `orders` o
+        -- 关联订单详情表
+        INNER JOIN order_detail od ON o.id = od.order_id
+        -- 左关联菜品表（详情可能是套餐，所以用LEFT JOIN）
+        LEFT JOIN dish d ON od.dish_id = d.id
+        -- 左关联套餐表（详情可能是菜品，所以用LEFT JOIN）
+        LEFT JOIN setmeal s ON od.setmeal_id = s.id
+        WHERE
+        -- 订单时间范围
+        o.order_time BETWEEN #{beginTime} AND #{endTime}
+        -- 订单状态：已完成
+        AND o.status = #{completedStatus}
+        -- 排除无效数据（避免既不是菜品也不是套餐的异常详情）
+        AND (od.dish_id IS NOT NULL OR od.setmeal_id IS NOT NULL)
+        -- 按产品名分组（同一菜品/套餐合并）
+        GROUP BY
+        product_name
+        -- 按销量降序排序，取前10
+        ORDER BY
+        total_sales DESC
+        LIMIT 10
+    </select>
+
+</mapper>

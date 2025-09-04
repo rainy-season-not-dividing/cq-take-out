@@ -1,12 +1,14 @@
 package com.sky.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.sky.dto.SetmealDTO;
+import com.sky.entity.SetmealPO;
 import com.sky.result.PageResult;
 import com.sky.vo.SetmealVO;
 
 import java.util.List;
 
-public interface SetmealService {
+public interface SetmealService extends IService<SetmealPO> {
     // 套餐分页查询
     PageResult<SetmealVO> page(Long categoryId, String name, Integer page, Integer pageSize, Integer status);
 

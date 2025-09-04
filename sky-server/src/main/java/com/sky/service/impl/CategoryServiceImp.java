@@ -8,6 +8,8 @@ import com.sky.constant.CategoryConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.CategoryDTO;
 import com.sky.entity.CategoryPO;
+import com.sky.entity.DishPO;
+import com.sky.entity.SetmealPO;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.CategoryMapper;
 import com.sky.mapper.DishMapper;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -109,22 +112,25 @@ public class CategoryServiceImp extends ServiceImpl<CategoryMapper,CategoryPO> i
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
-        Long count = dishMapper.countByCategoryId(id);
+        // 1、查询当前分类是否关联了菜品
+//        Long count = dishMapper.countByCategoryId(id);
+        Long count = dishMapper.selectCount(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,id));
         if(count>0){
             throw new DeletionNotAllowedException(CategoryConstant.CATEGORY_IS_RELATED_TO_DISH);
         }
+        dishMapper.delete(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,id));
+        // 2、查询当前分类是否关联了套餐
         count = setmealMapper.countByCategoryId(id);
         if(count>0){
             throw new DeletionNotAllowedException(CategoryConstant.CATEGORY_IS_RELATED_TO_SETMEAL);
         }
+        setmealMapper.delete(new LambdaQueryWrapper<SetmealPO>().eq(SetmealPO::getCategoryId,id));
         //根据id删除分类
+        // 自定义方法
 //        categoryMapper.deleteById(id);
-        // 1、查询当前分类是否关联了菜品
-        // todo：完成菜品后补充
-        // 2、查询当前分类是否关联了套餐
-        // todo：完成套餐后补充
-        // 根据id删除分类
+        // mybatis-plus
         removeById(id);
     }
 
