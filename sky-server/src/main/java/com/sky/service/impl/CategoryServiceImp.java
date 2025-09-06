@@ -21,6 +21,7 @@ import com.sky.context.BaseContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,9 @@ public class CategoryServiceImp extends ServiceImpl<CategoryMapper,CategoryPO> i
 
     @Autowired
     private SetmealMapper setmealMapper;
+
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
 
     @Override
     public void update(CategoryDTO categoryDTO) {
@@ -136,8 +140,17 @@ public class CategoryServiceImp extends ServiceImpl<CategoryMapper,CategoryPO> i
 
     @Override
     public List<CategoryPO> selectByType(Integer type) {
+        // 查询是否命中缓存
+        if(redisTemplate.opsForValue().get(CategoryConstant.LIST_BY_TYPE_REDIS_KEY+ type) != null){
+            return (List<CategoryPO>) redisTemplate.opsForValue().get(CategoryConstant.LIST_BY_TYPE_REDIS_KEY+ type);
+        }
+
 //        List<CategoryPO> categoryPOs = categoryMapper.selectByType(type);
         List<CategoryPO> categoryPOs = list(new LambdaQueryWrapper<CategoryPO>().eq(CategoryPO::getType,type));
+
+        // 写入缓存
+        String key = CategoryConstant.LIST_BY_TYPE_REDIS_KEY+ type;
+        redisTemplate.opsForValue().set(key,categoryPOs);
         return categoryPOs;
     }
 }

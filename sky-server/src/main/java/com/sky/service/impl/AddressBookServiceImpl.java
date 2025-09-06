@@ -1,0 +1,12 @@
+package com.sky.service.impl;
+
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sky.entity.AddressBookPO;
+import com.sky.mapper.AddressBookMapper;
+import com.sky.service.AddressBookService;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AddressBookServiceImpl  extends ServiceImpl<AddressBookMapper, AddressBookPO> implements AddressBookService {
+}

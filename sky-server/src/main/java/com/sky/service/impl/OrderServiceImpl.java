@@ -1,33 +1,28 @@
 package com.sky.service.impl;
 
-
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sky.constant.OrderStatusConstant;
-import com.sky.dto.CancelOrderDTO;
-import com.sky.dto.OrderSearchDTO;
-import com.sky.dto.ProductSalesDTO;
-import com.sky.dto.RejectOrderDTO;
-import com.sky.entity.DishPO;
-import com.sky.entity.OrderDetailPO;
-import com.sky.entity.OrderPO;
-import com.sky.entity.SetmealPO;
+import com.sky.constant.PayStatusConstant;
+import com.sky.context.BaseContext;
+import com.sky.dto.*;
+import com.sky.entity.*;
 import com.sky.mapper.OrderMapper;
 import com.sky.result.PageResult;
-import com.sky.service.DishService;
-import com.sky.service.OrderDetailService;
-import com.sky.service.OrderService;
-import com.sky.service.SetmealService;
+import com.sky.result.Result;
+import com.sky.service.*;
+import com.sky.utils.NumberUtil;
 import com.sky.vo.OrderDetailsVO;
 import com.sky.vo.OrderStatisticVO;
 import com.sky.vo.ReportStatisticTop;
+import com.sky.vo.UserOrderVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -52,6 +47,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
     @Autowired
     private OrderMapper orderMapper;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AddressBookService addressBookService;
+
     @Override
     public OrderStatisticVO statistics() {
         // 1、confirmed
@@ -70,15 +71,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
         orderDetailService.remove(new LambdaQueryWrapper<>(OrderDetailPO.class).eq(OrderDetailPO::getOrderId, cancelOrderDTO.getId()));
         // 2、订单表 修改对应订单状态/信息
         OrderPO orderPO = BeanUtil.copyProperties(cancelOrderDTO, OrderPO.class);
-        // 修改订单状态
+        // 修改订单状态: 支付状态、订单状态
         orderPO.setStatus(OrderStatusConstant.CANCELED);
+        orderPO.setPayStatus(PayStatusConstant.PAYMENT_REBACK);
         updateById(orderPO);
     }
 
     @Override
     public void complete(Long id) {
         // 1、修改订单状态--状态修改为完成
-        updateById(OrderPO.builder().status(OrderStatusConstant.COMPLETED).id(id).build());
+        updateById(OrderPO.builder().id(id).status(OrderStatusConstant.COMPLETED).deliveryTime(LocalDateTime.now()).build());
     }
 
     @Override
@@ -89,7 +91,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
 
     @Override
     public void confirm(Integer id) {
-        // 修改订单状态--状态修改为完成
+        // 修改订单状态--状态修改为接单
         updateById(OrderPO.builder().status(OrderStatusConstant.DELEVERY_WAITING).id(Long.valueOf(id)).build());
     }
 
@@ -157,12 +159,25 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
     public PageResult<OrderDetailsVO> conditionSearch(Integer page, Integer pageSize, OrderSearchDTO orderConditions) {
         // 获取分页数据
         Page<OrderPO> pageRecords = new Page<>(page,pageSize);
+        LocalDateTime beginTime = null; // 初始化为null
+        // 仅当前端传了beginTime（非null），才转换时间
+        if (orderConditions.getBeginTime() != null) {
+            beginTime = LocalDateTime.of(orderConditions.getBeginTime(), LocalTime.MIN);
+        }
+
+        LocalDateTime endTime = null; // 初始化为null
+        if (orderConditions.getEndTime() != null) {
+            endTime = LocalDateTime.of(orderConditions.getEndTime(), LocalTime.MAX);
+        }
+        Integer status = orderConditions.getStatus();
+        String phone = orderConditions.getPhone();
+        String number = orderConditions.getNumber();
         lambdaQuery()
-                .eq(OrderPO::getStatus,orderConditions.getStatus())
-                .like(OrderPO::getNumber,orderConditions.getNumber())
-                .like(OrderPO::getPhone,orderConditions.getPhone())
-                .ge(OrderPO::getOrderTime,orderConditions.getBeginTime())
-                .le(OrderPO::getOrderTime,orderConditions.getEndTime())
+                .eq(status!=null,OrderPO::getStatus,status)
+                .like(number!=null,OrderPO::getNumber,number)
+                .like(phone!=null,OrderPO::getPhone,phone)
+                .ge(beginTime!=null,OrderPO::getOrderTime,beginTime)
+                .le(endTime!=null,OrderPO::getOrderTime,endTime)
                 .page(pageRecords);
         List<OrderPO> orderPOList = pageRecords.getRecords();
         // 把OrderPO封装成OrderDetailsVO
@@ -200,35 +215,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
         return new PageResult<>(pageRecords.getTotal(), orderDetailsVOList);
     }
 
-    @Override
-    public ReportStatisticTop top10(LocalDate begin, LocalDate end) {
-        // 1. 转换时间范围（当天最小时间~当天最大时间）
-        LocalDateTime beginTime = LocalDateTime.of(begin, LocalTime.MIN);
-        LocalDateTime endTime = LocalDateTime.of(end, LocalTime.MAX);
-
-        // 2. 调用Mapper一次性获取Top10统计结果（SQL已完成联表、分组、排序）
-        List<ProductSalesDTO> top10List = orderMapper.selectTop10Sales(
-                beginTime,
-                endTime,
-                OrderStatusConstant.COMPLETED
-        );
-
-        // 3. 封装成返回格式（拼接名称和销量字符串）
-        String dishNames = top10List.stream()
-                .map(ProductSalesDTO::getProductName)
-                .collect(Collectors.joining(","));
-
-        String dishNumbers = top10List.stream()
-                .map(dto -> dto.getTotalSales().toString())
-                .collect(Collectors.joining(","));
-
-        return new ReportStatisticTop(dishNames, dishNumbers);
-    }
-
-/*
-订单统计
-下面这个方法比上面的复杂：复杂条件直接在sql中完成，而不是在service中多次访问数据库，要避免多次访问数据库
- */
+    /*
+    订单统计
+    下面这个方法比其下面一个的复杂：复杂条件直接在sql中完成，而不是在service中多次访问数据库，要避免多次访问数据库
+     */
 //    @Override
     public ReportStatisticTop Complextop10(LocalDate begin, LocalDate end) {
         // 同一日期格式
@@ -269,4 +259,86 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
         return new ReportStatisticTop(dishNames,dishNumbers);
     }
 
+
+    @Override
+    public ReportStatisticTop top10(LocalDate begin, LocalDate end) {
+        // 1. 转换时间范围（当天最小时间~当天最大时间）
+        LocalDateTime beginTime = LocalDateTime.of(begin, LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(end, LocalTime.MAX);
+
+        // 2. 调用Mapper一次性获取Top10统计结果（SQL已完成联表、分组、排序）
+        List<ProductSalesDTO> top10List = orderMapper.selectTop10Sales(
+                beginTime,
+                endTime,
+                OrderStatusConstant.COMPLETED
+        );
+
+        // 3. 封装成返回格式（拼接名称和销量字符串）
+        String dishNames = top10List.stream()
+                .map(ProductSalesDTO::getProductName)
+                .collect(Collectors.joining(","));
+
+        String dishNumbers = top10List.stream()
+                .map(dto -> dto.getTotalSales().toString())
+                .collect(Collectors.joining(","));
+
+        return new ReportStatisticTop(dishNames, dishNumbers);
+    }
+
+    @Override
+    public UserOrderVO submitOrder(UserOrderDTO userOrderDTO) {
+        // 获取当前用户
+        Long id = BaseContext.getCurrentId();
+        String userName = userService.getById(id).getName();
+        OrderPO orderPO = BeanUtil.copyProperties(userOrderDTO, OrderPO.class);
+        // 获取当前用户地址
+        AddressBookPO address = addressBookService.getById(userOrderDTO.getAddressBookId());
+        // 补充其它信息
+        orderPO.setUserId(id);
+        orderPO.setUserName(userName);
+        orderPO.setConsignee(address.getConsignee());
+        orderPO.setPhone(address.getPhone());
+        orderPO.setAddress(address.getProvinceName()+address.getCityName()+address.getDistrictName()+address.getDetail());
+        orderPO.setStatus(OrderStatusConstant.PAYMENT_WAITING);// 订单状态
+        orderPO.setPayStatus(PayStatusConstant.PAYMENT_WATING); // 支付状态
+        // 生成订单号
+        orderPO.setNumber(NumberUtil.generateOrderNumber());
+        // 插入订单信息，但是此时仍然是未支付状态
+        save(orderPO);
+        UserOrderVO userOrderVO = UserOrderVO.builder().id(Math.toIntExact(orderPO.getId()))
+                .orderAmount(BigDecimal.valueOf(userOrderDTO.getAmount()))
+                .orderNumber(orderPO.getNumber())
+                .orderTime(orderPO.getOrderTime().toString()).build();
+        // 返回数据
+        return userOrderVO;
+    }
+
+    @Override
+    public Result<String> payment(OrderPaymentDTO orderPaymentDTO) {
+        // 检查订单是否存在
+        OrderPO orderPO = getOne(new LambdaQueryWrapper<>(OrderPO.class).eq(OrderPO::getNumber, orderPaymentDTO.getOrderNumber()));
+        if (orderPO == null) {
+            return Result.error("订单不存在");
+        }
+        // 修改订单表信息 ： 支付方式、订单状态(待接单)、支付状态（已支付）、支付时间（now）、预计送达时间（now+establishTime）
+        orderPO.setPayMethod(orderPaymentDTO.getPayMethod());
+        orderPO.setStatus(OrderStatusConstant.PICK_UP_WAITING);
+        orderPO.setPayMethod(orderPaymentDTO.getPayMethod());
+        orderPO.setPayStatus(PayStatusConstant.PAYMENT_FINISHED);
+        orderPO.setCheckoutTime(LocalDateTime.now());
+        orderPO.setEstimatedDeliveryTime(orderPO.getEstimatedDeliveryTime());
+        updateById(orderPO);
+        String estimatedDeliveryTime = orderPO.getEstimatedDeliveryTime().toString();
+        return Result.success(estimatedDeliveryTime);
+    }
+
+
+
+
+
 }
+
+
+
+
+

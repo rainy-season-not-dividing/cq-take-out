@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("category")
 public class CategoryPO {
-    @TableId(value = "id")  // 如果不指定value, 则默认为id
+    @TableId(type = IdType.AUTO,value = "id")  // 如果不指定value, 则默认为id
     private Long id;
     private Long type;
     private String name;

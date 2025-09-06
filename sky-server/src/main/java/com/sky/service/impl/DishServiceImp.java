@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +47,9 @@ public class DishServiceImp extends ServiceImpl<DishMapper,DishPO> implements Di
 
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
 
 
 
@@ -156,10 +160,20 @@ public class DishServiceImp extends ServiceImpl<DishMapper,DishPO> implements Di
     @Override
     @Cacheable(cacheNames="category", key = "#categoryId")
     public List<DishPO> selectByCategoryId(Long categoryId) {
+        // 判断缓存是否命中
+        // todo:缓存穿透、缓存击穿 问题
+        List<DishPO> dishPOs = (List<DishPO>)redisTemplate.opsForValue().get(DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId);
+        if(dishPOs != null){
+            return dishPOs;
+        }
         // 自定义方法
 //        return dishMapper.selectByCategoryId(categoryId);
         // mybatis-plus
-        return list(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,categoryId));
+        dishPOs = list(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,categoryId));
+        // 写入缓存
+        String key = DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId;
+        redisTemplate.opsForValue().set(key,dishPOs);
+        return dishPOs;
     }
 
     @Override

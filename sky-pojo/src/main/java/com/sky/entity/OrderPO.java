@@ -20,6 +20,8 @@ public class OrderPO {
     private Integer status;
     private Long userId;
     private Long addressBookId;
+    // 下单时间
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime orderTime;
     private LocalDateTime checkoutTime;
     private Integer payMethod;
