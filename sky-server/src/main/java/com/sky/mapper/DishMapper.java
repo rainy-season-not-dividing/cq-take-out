@@ -18,8 +18,7 @@ public interface DishMapper extends BaseMapper<DishPO> {
 
     Page<DishVO> page(String name, Integer categoryId, Integer status);
 
-    @Select("select * from dish where id = #{id}")
-    DishPO selectById(Long id);
+
 
 //    @AutoFill(OperationType.INSERT)
 //    void insert(DishPO dishPO);

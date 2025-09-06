@@ -16,6 +16,7 @@ import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
+import com.sky.utils.RedisUtil;
 import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -28,8 +29,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +53,9 @@ public class DishServiceImp extends ServiceImpl<DishMapper,DishPO> implements Di
 
     @Autowired
     private RedisTemplate<String,Object> redisTemplate;
+
+    @Resource
+    private RedisUtil redisUtil;
 
 
 
@@ -117,7 +123,6 @@ public class DishServiceImp extends ServiceImpl<DishMapper,DishPO> implements Di
                             .select(CategoryPO::getName);
                     dishVO.setCategoryName(categoryMapper.selectOne(categoryQueryWrapper).getName());
                     // 添加菜品-口味
-                    // todo:换成mybatis-plus后重写
                     dishVO.setFlavors(dishFlavorMapper.selectByDishId(dishPO.getId()));
                     return dishVO;
                 })
@@ -159,21 +164,29 @@ public class DishServiceImp extends ServiceImpl<DishMapper,DishPO> implements Di
 
     @Override
     @Cacheable(cacheNames="category", key = "#categoryId")
-    public List<DishPO> selectByCategoryId(Long categoryId) {
+    public List<DishPO> selectByCategoryId(Long categoryId) throws InterruptedException {
         // 判断缓存是否命中
         // todo:缓存穿透、缓存击穿 问题
-        List<DishPO> dishPOs = (List<DishPO>)redisTemplate.opsForValue().get(DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId);
-        if(dishPOs != null){
-            return dishPOs;
-        }
-        // 自定义方法
-//        return dishMapper.selectByCategoryId(categoryId);
-        // mybatis-plus
-        dishPOs = list(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,categoryId));
-        // 写入缓存
-        String key = DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId;
-        redisTemplate.opsForValue().set(key,dishPOs);
-        return dishPOs;
+//        List<DishPO> dishPOs = (List<DishPO>)redisTemplate.opsForValue().get(DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId);
+//        if(dishPOs != null){
+//            return dishPOs;
+//        }
+//        // 自定义方法
+////        return dishMapper.selectByCategoryId(categoryId);
+//        // mybatis-plus
+//        dishPOs = list(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,categoryId));
+//        // 写入缓存
+//        String key = DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId;
+//        redisTemplate.opsForValue().set(key,dishPOs);
+//        return dishPOs;
+
+        // 解决缓存穿透、击穿、雪崩 等问题
+        return redisUtil.queryWithLogicExpire(
+                DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY,
+                categoryId,DishPO.class,
+                (id)->list(new LambdaQueryWrapper<DishPO>().eq(DishPO::getCategoryId,id)),
+                DishConstant.CACHE_SHOP_TTL_BASE,
+                TimeUnit.MINUTES);
     }
 
     @Override

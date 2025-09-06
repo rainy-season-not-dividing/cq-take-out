@@ -27,7 +27,7 @@ public interface DishService extends IService<DishPO> {
     void add(DishAddDTO dishAddDTO);
 
     // 根据分类id查询菜品
-    List<DishPO> selectByCategoryId(Long categoryId);
+    List<DishPO> selectByCategoryId(Long categoryId) throws InterruptedException;
 
 
     // 根据id批量删除菜品

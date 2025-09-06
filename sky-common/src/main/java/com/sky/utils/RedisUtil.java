@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,9 +49,19 @@ public class RedisUtil {
      * queryWithPassThrough	仅防缓存穿透	Redis 查询，无数据则查库，真实数据存入 Redis，空值存入 Redis 且固定 5 分钟过期
      */
 
-    /*
-    * 缓存击穿问题 + 缓存穿透问题
-    * 互斥锁 + 空值缓存
+
+    /**
+     *  缓存击穿问题 + 缓存穿透问题
+     *  互斥锁 + 空值缓存
+     * @param keyPrefix
+     * @param id
+     * @param type
+     * @param dbFallBack
+     * @param time
+     * @param unit
+     * @return
+     * @param <R>
+     * @param <ID>
      */
     public <R,ID> R queryWithMutex(String keyPrefix, ID id, Class<R> type, Function<ID,R> dbFallBack, Long time, TimeUnit unit){
         // redis查询
@@ -93,7 +104,7 @@ public class RedisUtil {
      * 缓存击穿
      * 逻辑过期（对象进一步封装，加上逻辑过期时间） + 空值缓存 + 互斥锁 + 线程池异步
      */
-    public <R,ID> R queryWithLogicExpire(String keyPrefix, ID id, Class<R> type, Function<ID,R> dbFallBack, Long time, TimeUnit unit) throws InterruptedException {
+    public <R,ID> List<R> queryWithLogicExpire(String keyPrefix, ID id, Class<R> type, Function<ID,List<R>> dbFallBack, Long time, TimeUnit unit) throws InterruptedException {
         // 1、redis查询
         String key = keyPrefix + id;
         Object redisValue = redisTemplate.opsForValue().get(key);
@@ -106,7 +117,7 @@ public class RedisUtil {
         //1.2、存在
         RedisDataDTO<R> redisData = objectMapper.convertValue(redisValue, RedisDataDTO.class);
         //1.2.1、判断是否逻辑过期
-        R data = redisData.getData();
+        List<R> data = redisData.getData();
         // 1.2.1.1、逻辑未过期--返回结果
         if(redisData.getExpireTime().isAfter(LocalDateTime.now())){
             return data;
@@ -117,7 +128,7 @@ public class RedisUtil {
             try{
                 // 异步更新redis,缓存重建
                 CACHE_REBUILD_EXECUTOR.submit(()->{
-                    R dbData = dbFallBack.apply(id);
+                    List<R> dbData = dbFallBack.apply(id);
                     if(dbData!=null){
                         RedisDataDTO<R> cacheData = new RedisDataDTO<>();
                         cacheData.setData(dbData);
