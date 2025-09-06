@@ -20,6 +20,18 @@ spring:
     port: ${sky.redis.port}
     password: ${sky.redis.password}
     database: ${sky.redis.database}
+  rabbitmq:
+    host: 192.168.88.128
+    port: 5672
+    username: admin
+    password: admin
+    publisher-confirm-type: correlated # 开启生产者确认（correlated 表示回调返回消息ID和确认结果）
+    publisher-returns: true # 开启消息返回机制（当消息无法路由到队列时，回调通知生产者）
+    listener:
+      simple:
+        acknowledge-mode: manual # 手动确认（manual），可选 auto（自动）、none（不确认），默认时auto，消费者接收消息后立刻确认
+
+
 
 mybatis:
   #mapper配置文件
@@ -36,6 +48,7 @@ logging:
         mapper: debug
         service: info
         controller: info
+        utils: info
 
 sky:
   jwt:

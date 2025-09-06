@@ -2,6 +2,7 @@ package com.sky.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -16,7 +17,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.sky.dto.RedisDataDTO;
+import org.springframework.stereotype.Component;
 
+@Component
+@Slf4j
 public class RedisUtil {
 
     // 空值缓存的过期时间（5分钟，单位：秒）
@@ -114,6 +118,15 @@ public class RedisUtil {
                 return null;
             }
         }
+//        else{
+//            List<R> dbData = dbFallBack.apply(id);
+//            RedisDataDTO<R> cacheData = new RedisDataDTO<>();
+//            cacheData.setData(dbData);
+//            cacheData.setExpireTime(LocalDateTime.now().plusSeconds(CACHE_SHOP_TTL_BASE));
+//            redisTemplate.opsForValue().set(key, cacheData);
+//            return dbData;
+//        }
+//        log.info("缓存命中：{}",redisValue);
         //1.2、存在
         RedisDataDTO<R> redisData = objectMapper.convertValue(redisValue, RedisDataDTO.class);
         //1.2.1、判断是否逻辑过期

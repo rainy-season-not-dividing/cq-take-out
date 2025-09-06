@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sky.constant.OrderStatusConstant;
 import com.sky.constant.PayStatusConstant;
+import com.sky.constant.RabbitConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.*;
 import com.sky.entity.*;
@@ -18,10 +19,13 @@ import com.sky.vo.OrderDetailsVO;
 import com.sky.vo.OrderStatisticVO;
 import com.sky.vo.ReportStatisticTop;
 import com.sky.vo.UserOrderVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implements OrderService {
 
     // 企业上直接在Service层一般是直接注入其它的Service而不是Mapper，高内聚，低耦合
@@ -52,6 +57,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
 
     @Autowired
     private AddressBookService addressBookService;
+
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     public OrderStatisticVO statistics() {
@@ -289,6 +297,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
     public UserOrderVO submitOrder(UserOrderDTO userOrderDTO) {
         // 获取当前用户
         Long id = BaseContext.getCurrentId();
+        log.info("用户下单:{}", id);
         String userName = userService.getById(id).getName();
         OrderPO orderPO = BeanUtil.copyProperties(userOrderDTO, OrderPO.class);
         // 获取当前用户地址
@@ -303,9 +312,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
         orderPO.setPayStatus(PayStatusConstant.PAYMENT_WATING); // 支付状态
         // 生成订单号
         orderPO.setNumber(NumberUtil.generateOrderNumber());
-        // 插入订单信息，但是此时仍然是未支付状态
-        save(orderPO);
-        UserOrderVO userOrderVO = UserOrderVO.builder().id(Math.toIntExact(orderPO.getId()))
+        orderPO.setOrderTime(LocalDateTime.now());
+        // 插入订单信息，但是此时仍然是未支付状态---将订单信息插入到redis stream中，/直接改为消息队列，插入到消息队列中
+        // 通过线程池异步拉取订单消息并写入数据库
+        /**
+         * 1、RabbitMQ的工具类：实现写入功能 ：生产者类(本类) 、消费者类 、 配置类（路由）
+         * 2、调用生产者类发送信息、消费者类持续拉取信息并进行消费，写入db，线程池-多线程
+         */
+        rabbitTemplate.convertAndSend(RabbitConstant.EXCHANGE_ORDER,RabbitConstant.ROUTING_KEY_ORDER,orderPO);
+
+//        save(orderPO);
+        UserOrderVO userOrderVO = UserOrderVO.builder()
+                // 订单id应该不用返回，只要返回订单号Number即可！！
+//                .id(Math.toIntExact(orderPO.getId()))
                 .orderAmount(BigDecimal.valueOf(userOrderDTO.getAmount()))
                 .orderNumber(orderPO.getNumber())
                 .orderTime(orderPO.getOrderTime().toString()).build();

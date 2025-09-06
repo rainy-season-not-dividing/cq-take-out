@@ -163,10 +163,9 @@ public class DishServiceImp extends ServiceImpl<DishMapper,DishPO> implements Di
     }
 
     @Override
-    @Cacheable(cacheNames="category", key = "#categoryId")
+//    @Cacheable(cacheNames="category", key = "#categoryId")
     public List<DishPO> selectByCategoryId(Long categoryId) throws InterruptedException {
         // 判断缓存是否命中
-        // todo:缓存穿透、缓存击穿 问题
 //        List<DishPO> dishPOs = (List<DishPO>)redisTemplate.opsForValue().get(DishConstant.LIST_BY_CATEGORY_ID_REDIS_KEY + categoryId);
 //        if(dishPOs != null){
 //            return dishPOs;

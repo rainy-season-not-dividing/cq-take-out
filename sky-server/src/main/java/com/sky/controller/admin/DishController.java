@@ -55,7 +55,7 @@ public class DishController {
     }
 
     @GetMapping("/admin/dish/list")
-    public Result<List<DishPO>> getList(Long categoryId){
+    public Result<List<DishPO>> getList(Long categoryId) throws InterruptedException {
         log.info("查询分类id查询菜品列表:{}",categoryId);
         // 采用redis处理高并发问题
 //        String key = "category_"+categoryId;
@@ -65,8 +65,10 @@ public class DishController {
 //        }
 //        list = dishService.selectByCategoryId(categoryId);
 //        redisTemplate.opsForValue().set(key,list);
-        // 直接通过mysql数据库来实现
+        // 加入缓存
+        //todo：信息统计：从1.79s-->326ms
         List<DishPO> list = dishService.selectByCategoryId(categoryId);
+
         return Result.success(list);
     }
 
