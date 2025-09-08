@@ -28,7 +28,8 @@ public class OrderDeadLetterConsumer {
     // 高并发下只有  27%的异常问题
     @RabbitListener(
             queues = RabbitConstant.QUEUE_ORDER_DEAD,
-            messageConverter = "jackson2JsonMessageConverter")
+            messageConverter = "jackson2JsonMessageConverter",
+            concurrency="20")
     @Transactional(rollbackFor = Exception.class)   //这个注解的意思是：如果方法中出现异常，则进行回滚
     public void consume(OrderPO orderPO, Channel channel, Message msg) throws IOException {
         long deleveryTag = msg.getMessageProperties().getDeliveryTag();
@@ -42,7 +43,7 @@ public class OrderDeadLetterConsumer {
             // todo： 通过springwebsock ，给服务器发送信息，通知新的订单已生成
         }
         catch(Exception e){
-            log.error("订单生成失败：{}", e.getMessage());
+            log.error("订单生成失败且重试失败：{}", e.getMessage());
             // 「消息标识」「批量操作」「是否重回原队列」
             // 手动拒绝消息并重回队列，requeue=true 表示重试，重回本队列，false表示进入死信队列，不会本队列
             channel.basicNack(deleveryTag, false, false);

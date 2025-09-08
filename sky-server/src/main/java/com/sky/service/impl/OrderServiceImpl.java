@@ -320,8 +320,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderPO> implemen
          * 2、调用生产者类发送信息、消费者类持续拉取信息并进行消费，写入db，线程池-多线程
          */
         rabbitTemplate.convertAndSend(RabbitConstant.EXCHANGE_ORDER,RabbitConstant.ROUTING_KEY_ORDER,orderPO);
-
-//        save(orderPO);
+        /**
+         * 直接save，不用MQ
+         */
+        //        save(orderPO);
         UserOrderVO userOrderVO = UserOrderVO.builder()
                 // 订单id应该不用返回，只要返回订单号Number即可！！
 //                .id(Math.toIntExact(orderPO.getId()))

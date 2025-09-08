@@ -59,7 +59,10 @@ public class DirectRabbitConfig {
 
     @Bean
     public Queue deadLetterQueue(){
-        return new Queue(RabbitConstant.QUEUE_ORDER_DEAD,true);
+
+        return QueueBuilder.durable(RabbitConstant.QUEUE_ORDER_DEAD)
+                .withArgument("x-max-retry-count", 3)
+                .build();
     }
 
     @Bean

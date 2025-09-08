@@ -36,7 +36,10 @@ public class NumberUtil {
         String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
 
         // 步骤2：生成固定位数的随机数（不足补0，如3位：8→008，12→012）
+
         String randomNum = generateFixedLengthRandomNum(RANDOM_NUM_LENGTH);
+
+        // todo：还可以加入线程标识
 
         // 步骤3：拼接订单号（业务前缀+时间戳+机器标识+随机数）
         return String.join("", BUSINESS_PREFIX, timestamp, MACHINE_ID, randomNum);
